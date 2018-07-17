@@ -83,9 +83,9 @@ Shiny Server by default listens to port 3838 so you will need to open this port 
 
 Go to your Azure portal, select your VM and go to Setting >>Network Interfaces
 
-<p align="left">
-  <img src="C:\Users\syick\Desktop\VM-shiny-server-group-security.png" title="setting vm">
-</p>
+
+![VM setting](C:/Users/syick/Desktop/VM-shiny-server-group-security.png)
+
 
 click group security
 
