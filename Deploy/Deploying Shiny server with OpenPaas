@@ -1,0 +1,96 @@
+The following paragraph explain how to build a shiny server using OpenPaas.
+Important information concerning openPaas :
+OpenPaas is the AXA deployment of RedHat OpenShift service.
+OpenPaas is fully docker-based. It enables to deploy and scale application easily. This article describe how to use openPaas to deploy a shiny server.
+
+3 things should be kept in mind :
+
+Due to its docker foundation, OpenPaas is not conceived to manage databases :
+no replication management : each pod is independent (so a change in the DB of one pod will not be seen in another pod).
+no other storage : if the pod is destroyed, so is the DB.
+Unless they are in Read-only access mode, databases should not be deployed on more than 1 pod. If you're deploying a shiny app with a R/W database, you're options are :
+
+use only 1 pod
+host your database outside of OpenPaas (recommendation : RDS)
+The same applies to log : if you don't want to lose your logs, they should be redirected to the standard output, where they will be flushed in ElasticSearch. By trying to store them in a local DB, you will lose them is the pod is destroyed.
+
+As dockerisation of the Shiny license management server is still under discussion with RStudio(c), the current (Oct 2017) shiny-server image is using a free-plan license (automatically renewed by the Digital Booster). It has no impact for your app, which will benefit from the renewed master-image. However, you should keep this information in mind and follow project progress to evaluate its impact on your app.
+
+
+
+
+Some advice to create openPaas projects:
+You should ask your digital Booster to open a project in openPaas.
+You should be informed that people accessing to a specific openPaas project will have the same rights on all the pod/application from this project.
+In addition, all pods will be shown in the same subfolder.
+This means that you should carefully manage the way you manage your app within your project(s).
+Recommendation : Create a project per app / bunch of related app.
+
+
+
+
+Guidelines to build your shiny app :
+0. Ask your digital booster an open paas access and project
+1. Adjust parameters in you GHE repo
+You will never have root access to Openpaas. To install your code, OpenPaas will connect your Github account. To specifically install a shiny server, you will use a pre-built Shiny server image. This image will always be connected to the app you will build. So far, the (free)license, the R version... are managed through the master image.
+
+In order to have your app working, you will need at least 2 things :
+
+List all your packages in a file named requirements.txt and store in the root directory of your repo. One package name per line. Beware of text editor with corrupted typo (like excel => text in a mac which produce a End of Line symbol not recognized by linux in OpenPaas : to be sure your file is ok you can open it with vi.
+
+create a /shiny-cfg/ folder in your repo and store in it the configuration file of your shiny server shiny-server.conf, in which you should have add at least the following stuff:
+ 
+#### 2. When done : connect to openpaas
+https://osconsole.pink.eu-central-1.aws.openpaas.axa-cloud.com/console/
+
+3. store your GHE token
+To let OpenPaas install your code from GHE, you need to enter your token as a secret :
+
+
+create your project
+
+name your secret (it will be shared within your project so make it understandable !). It should be lowercase
+type your GHE token (to setup your token see GHE-faq
+Tick link secret to Service Account
+choose builderserice account
+
+4. Select your project
+In the following case we have 2 available projects :
+
+select your project
+
+Project should at least be duplicated per environment. They can also be created per application or per team.
+!! Nota : rights are affected per projects so all people granted for a project will have the same rights on all applications within this project !
+
+
+5. Add your application to project
+Click on the "Add to project" button to add your app
+
+ 
+6. Select your image
+In our case, type "shiny" and select the resulted image :
+
+ 
+7. configure your app
+All name should be typed in lowercase :
+
+config
+
+choose the name for your application
+enter the link to your Github enterprise repository
+enter your GHE secret
+specify the DNS name for your project : Nota: 1 DNS adress per project (ie per entity X env). For AGPC : axa-gpc-fr-dev-int.pink.eu-central-1.aws.openpaas.axa-cloud.com To know your DNS name project, ask your digital Booster.
+Then click create
+
+
+8. Follow the Build step from the Overview panel
+You can have a look at your logs from the Overview panel. config
+
+View log
+Click on the URL in the top right (when finish) to launch your app
+Click on the pod to enter it : you will get access to global information, terminal, etc...
+config
+
+
+9. (Re)Build your app
+From the Build tab, click on your app. The "Build" button is on the top right. CAUTION If you're sharing an environment ,be sure with your Axa Tech Contact that you have enough space to rebuild your app (for TETM in AGPC space, previous app should be killed before rebuilding an application)
