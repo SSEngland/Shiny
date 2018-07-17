@@ -1,0 +1,93 @@
+How to install and deploy shiny apps on a shiny server (when you have root access)
+In this example, we consider a Ubuntu 14.04 server with shiny and shinyserver installed
+
+install git
+sudo apt-get install git
+
+If this is the first shiny app on this server, create your apps directory
+cd /opt/shiny-server sudo mkdir shiny-apps
+
+move to this new directory and clone your GHE app repository example : git clone https://github.axa.com/[your-org]/[your-repo].git
+
+Create a symbolic link to this repo
+
+sudo ln -s /opt/shiny-server/shiny-apps/[your-repo] /srv/shiny-server/[your-app-name]
+
+Your app is ready you can launch it at http://[IP]:3838/[your-app-name]/
+Install needed packages (TO BE CHANGED : BUILD A SCRIPT INSTEAD)
+
+sudo su - -c "R -e \"install.packages('data.table', repos = 'http://cran.rstudio.com/')\""
+sudo su - -c "R -e \"install.packages('dplyr', repos = 'http://cran.rstudio.com/')\""
+sudo su - -c "R -e \"install.packages('DT', repos = 'http://cran.rstudio.com/')\""
+sudo su - -c "R -e \"install.packages('googleVis', repos = 'http://cran.rstudio.com/')\""
+sudo su - -c "R -e \"install.packages('Hmisc', repos = 'http://cran.rstudio.com/')\""
+sudo su - -c "R -e \"install.packages('jsonlite', repos = 'http://cran.rstudio.com/')\""
+sudo su - -c "R -e \"install.packages('knitr', repos = 'http://cran.rstudio.com/')\""
+sudo su - -c "R -e \"install.packages('leaflet', repos = 'http://cran.rstudio.com/')\""
+sudo su - -c "R -e \"install.packages('lubridate', repos = 'http://cran.rstudio.com/')\""
+sudo su - -c "R -e \"install.packages('magrittr', repos = 'http://cran.rstudio.com/')\""
+sudo su - -c "R -e \"install.packages('rlist', repos = 'http://cran.rstudio.com/')\""
+sudo su - -c "R -e \"install.packages('shiny', repos = 'http://cran.rstudio.com/')\""
+sudo su - -c "R -e \"install.packages('shinyBS', repos = 'http://cran.rstudio.com/')\""
+sudo su - -c "R -e \"install.packages('shinydashboard', repos = 'http://cran.rstudio.com/')\""
+sudo su - -c "R -e \"install.packages('stringr', repos = 'http://cran.rstudio.com/')\""
+sudo su - -c "R -e \"install.packages('tidyr', repos = 'http://cran.rstudio.com/')\""
+Connexion to the installed Shiny server
+Let's consider this machine :
+
+connection as an admin : open a terminal and type : ssh [login]@[DNS]
+For instance for the TETM machine :
+ssh agpc@agpc-tetm.westeurope.cloudapp.azure.com Accept the warning message and enter your password
+
+go to cd /opt/shiny-server/shiny-apps
+
+Clone your git repo : sudo git clone https://github.axa.com/fleur-lecarpentier/tetm.git (if update of the repo : cd /opt/shiny-server/shiny-apps/[repo] and sudo git pull origin master )
+
+Create a symbolic link to this repo : sudo ln -s //opt/shiny-server/shiny-apps/tetm /srv/shiny-server/tetm
+
+Your app is ready you can launch it at http://[IP]:3838/tetm/
+
+Note that the configuration file is available here /etc/shiny-server
+
+Errors
+Logs are available here :
+cd /var/log/shiny-server/ To have more details available in the web browser, you should change /etc/shiny-server$/shiny-server.conf by adding a line before the server{ part... :
+sanitize_errors off;
+
+Know errors :
+The application exited during initialization.
+
+####Reasons :
+
+1/ package installation : TO BE CHECKED : you need to pre install the packages on your shiny server
+
+To see installed package, go to cd /usr/lib/R/library and you will see all packages installed on your R-shiny server
+
+Caution : by default, your installed packages are stored here : ls /usr/local/lib/R/site-library SEE HOW TO MAKE IT CONVERGE
+
+So far, I made it quick and dirty : sudo cp -R /usr/local/lib/R/site-library/* /usr/lib/R/library/
+
+But to install them directly in the right place : sudo su - -c "R -e \"install.packages('dplyr', repos = 'http://cran.rstudio.com/', dependencies = TRUE, lib = '/usr/lib/R/library/')\""
+
+For some package, curl is necessary. With Ubuntu, you can install : sudo apt-get install libcurl4-openssl-dev
+
+2/ port is in use
+
+see by executing : netstat --tcp -a -n -p | grep 3838
+
+You can see the process using it by executing :
+sudo lsof -t -i:3838 (give your the PID)
+
+You can kill it
+sudo kill -9 [PID]
+
+To check the process has been killed show processes : ps -aux
+
+(to restart shiny server : sudo systemctl restart shiny-server )
+
+Issue n°2 : Disconnecting from server
+To get access to a full log in your browser : more options > developper tools
+
+1/ Reason1/ read/write error : change in chmod your files in unix because the app is launched by shiny user.
+
+http://docs.rstudio.com/shiny-server/#introduction
